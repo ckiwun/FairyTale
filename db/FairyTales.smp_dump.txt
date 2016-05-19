@@ -1,0 +1,22 @@
+
+State Machine - |FairyTales|VGA_Controller:u1|wavestate2
+Name wavestate2.L3 wavestate2.L2 wavestate2.L1 wavestate2.Idle wavestate2.TurnLeft 
+wavestate2.Idle 0 0 0 0 0 
+wavestate2.L1 0 0 1 1 0 
+wavestate2.L2 0 1 0 1 0 
+wavestate2.L3 1 0 0 1 0 
+wavestate2.TurnLeft 0 0 0 1 1 
+
+State Machine - |FairyTales|VGA_Controller:u1|wavestate1
+Name wavestate1.R3 wavestate1.R2 wavestate1.R1 wavestate1.Idle wavestate1.TurnRight 
+wavestate1.Idle 0 0 0 0 0 
+wavestate1.R1 0 0 1 1 0 
+wavestate1.R2 0 1 0 1 0 
+wavestate1.R3 1 0 0 1 0 
+wavestate1.TurnRight 0 0 0 1 1 
+
+State Machine - |FairyTales|I2C_CCD_Config:u8|mSetup_ST
+Name mSetup_ST.0000 mSetup_ST.0010 mSetup_ST.0001 
+mSetup_ST.0000 0 0 0 
+mSetup_ST.0001 1 0 1 
+mSetup_ST.0010 1 1 0 

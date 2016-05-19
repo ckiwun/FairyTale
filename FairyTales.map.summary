@@ -1,0 +1,14 @@
+Analysis & Synthesis Status : Successful - Thu Aug 22 19:38:46 2013
+Quartus II Version : 10.0 Build 218 06/27/2010 SJ Full Version
+Revision Name : FairyTales
+Top-level Entity Name : FairyTales
+Family : Cyclone IV E
+Total logic elements : 22,433
+    Total combinational functions : 21,294
+    Dedicated logic registers : 4,528
+Total registers : 4528
+Total pins : 458
+Total virtual pins : 0
+Total memory bits : 3,207,224
+Embedded Multiplier 9-bit elements : 18
+Total PLLs : 1

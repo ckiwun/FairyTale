@@ -1,0 +1,39 @@
+module SDRAM_Complexion_Detection(	
+							// input
+							iRed,
+							iGreen,
+							iBlue,
+							// output
+							oRed,
+							oGreen,
+							oBlue,
+							oIsSkin		
+									
+							);
+									
+	input	[9:0]	iRed;
+	input	[9:0]	iGreen;
+	input	[9:0]	iBlue;
+	output	[9:0]	oRed;
+	output	[9:0]	oGreen;
+	output	[9:0]	oBlue;
+	output	reg	[1:0]		oIsSkin;
+	//====combinational declaration===========//
+	always @(*) begin
+		// ********** Thresholding **************************************************************************** //
+		if (((iRed-iGreen) > 10'd80) && ((iRed-iGreen) < 10'd180))
+			oIsSkin[1] = 1;
+		else
+			oIsSkin[1] = 0;
+		if(((iRed-iGreen) > 10'd432) && ((iRed-iGreen) < 10'd592))
+			oIsSkin[0] = 1;
+		else
+			oIsSkin[0] = 0;
+		// **************************************************************************************************** //
+	end
+	//====continuous assignment===============//
+	assign oRed = iRed;
+	assign oGreen = iGreen;
+	assign oBlue = iBlue;
+	
+endmodule

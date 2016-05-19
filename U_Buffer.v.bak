@@ -1,0 +1,31 @@
+module U_Buffer(
+				clk100M,
+				iSkin,
+				oSkinFrame
+				);
+				
+input	clk100M;
+input	iSkin;
+output	[800*600-1:0]oSkinFrame;
+
+reg [19:0] counter,next_counter;
+reg Frame_rate;//24fps
+
+
+
+always @(*) begin
+	next_counter = counter + 1;
+end
+
+always @(posedge clk100M or posedge Frame_rate) begin
+	if(Frame_rate) begin
+		oSkinFrame[counter] <= iSkin;
+		counter <= 0;
+	end
+	else begin
+		oSkinFrame[counter] <= iSkin;
+		counter <= next_counter;
+	end
+end
+
+endmodule

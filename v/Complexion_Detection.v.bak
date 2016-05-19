@@ -1,0 +1,201 @@
+module Complexion_Detection(	
+							clk,
+							rst,
+							rst_frame,
+							line_val,
+							//luminance
+							add,
+							sub,
+							// Control side
+							oRequest,
+							iRed,
+							iGreen,
+							iBlue,
+							iIsSkin,
+							// VGA side
+							iRequest,
+							oRed,
+							oGreen,
+							oBlue,
+							counter,
+							coorX,
+							coorY,
+							// Control
+							iSwitch
+							);
+									
+	input			clk;
+	input			rst;
+	input			rst_frame;
+	input			line_val;
+	input			add;
+	input			sub;
+	input	[9:0]	iRed  ;
+	input	[9:0]	iGreen;
+	input	[9:0]	iBlue ;
+	input			iRequest;
+	input			iIsSkin;
+	input	[3:0]		iSwitch;
+
+	
+	output	reg	[9:0]	oRed;
+	output	reg	[9:0]	oGreen;
+	output	reg	[9:0]	oBlue;
+	output			oRequest;
+	//====parameter declaration===============//
+	parameter lum_scale = 50;
+	parameter sat_scale = 20;
+	//====reg/write declaration===============//
+	reg		[3:0]	luminance,next_luminance;
+	reg		[3:0]	saturation,next_saturation;	
+	reg		[9:0]	pRed 	;		
+	reg		[9:0]	pGreen ;	
+	reg		[9:0]	pBlue ;	
+	reg		[10:0]	del_pRed;
+	reg		[10:0]	del_pBlue;
+	reg				pre_add;
+	reg				pre_sub;
+	reg				event_add_lum;
+	reg				event_sub_lum;
+	reg				event_add_sat;
+	reg				event_sub_sat;	
+	reg		[9:0]	coorX;
+	reg		[9:0]	coorY;
+	reg		[19:0]	counter;
+	reg		[19:0]	next_counter;
+	reg				pre_rst_frame;
+
+	//====combinational declaration===========//
+	always @(*) begin	
+		coorX = counter % 800;
+		coorY = counter / 800;
+		if(pre_rst_frame^rst_frame)
+			next_counter = 0;
+		/*else if(counter==20'd480000)
+			next_counter = counter;	*/
+		else if(line_val)
+			next_counter = counter + 1;
+		else
+			next_counter = counter;
+		del_pRed = luminance*lum_scale;
+		del_pBlue = luminance*lum_scale + saturation*sat_scale;
+		pRed = (11'd1023 - iRed) >= del_pRed ? iRed + del_pRed : 10'd1023;
+		pGreen = ((11'd1023 - iGreen + saturation*sat_scale) <= luminance*lum_scale)	? 10'd1023 : ((iGreen + luminance*lum_scale) >=  saturation*sat_scale) ? iGreen + luminance*lum_scale - saturation*sat_scale : 10'd0;
+		pBlue = (11'd1023 - iBlue) >= del_pBlue ? iBlue + del_pBlue : 10'd1023;
+		event_add_lum = ({pre_add,add}==2'b10)&iSwitch[0];
+		event_sub_lum = ({pre_sub,sub}==2'b10)&iSwitch[0];
+		casex({event_add_lum,event_sub_lum,(luminance>0),(luminance==4'b1111)})
+			4'b1xx0: next_luminance = luminance + 1;
+			4'b011x: next_luminance = luminance - 1;
+			default:next_luminance = luminance;
+		endcase
+		
+		//saturation
+		event_add_sat = ({pre_add,add}==2'b10)&iSwitch[1];
+		event_sub_sat = ({pre_sub,sub}==2'b10)&iSwitch[1];		
+		casex({event_add_sat,event_sub_sat,(saturation>0),(saturation==4'b1111)})
+			4'b1xx0: next_saturation = saturation + 1;
+			4'b011x: next_saturation = saturation - 1;
+			default:next_saturation = saturation;
+		endcase		
+		
+		case(iSwitch[3:2])  //complexion detection
+			2'b10: 	begin
+						if (iIsSkin) begin
+							oRed 	= 10'h3FF;
+							oGreen 	= 10'h3FF;
+							oBlue 	= 10'h3FF;
+						end
+						else begin
+							oRed 	= 10'h0;
+							oGreen 	= 10'h0;
+							oBlue 	= 10'h0;
+						end
+					end
+			2'b01: 	begin //gray scale: brightness
+						oRed 	= (pRed + 2*pGreen + pBlue)/4;
+						oGreen 	= (pRed + 2*pGreen + pBlue)/4;
+						oBlue 	= (pRed + 2*pGreen + pBlue)/4;
+					end
+			2'b11: 	begin //infrared
+					casex({coorX,coorY})
+/*						10'b000xxxxxxx: begin
+											oRed 	= 10'h0;
+						                    oGreen 	= 10'h0;
+						                    oBlue 	= 10'h0;
+										end//0~127
+						10'b001xxxxxxx: begin
+											oRed 	= 10'h3FF;
+						                    oGreen 	= 10'h3FF;
+						                    oBlue 	= 10'h3FF;
+										end//128~255
+						10'b010xxxxxxx: begin
+											oRed 	= 10'h0;
+						                    oGreen 	= 10'h0;
+						                    oBlue 	= 10'h0;
+										end//256~383	*/
+						20'b011xxxxxxx011xxxxxxx: begin
+											oRed 	= 10'h3FF;
+						                    oGreen 	= 10'h3FF;
+						                    oBlue 	= 10'h3FF;
+										end//384~511
+/*						10'b100xxxxxxx: begin
+											oRed 	= 10'h0;
+						                    oGreen 	= 10'h0;
+						                    oBlue 	= 10'h0;
+										end//512~639
+						10'b101xxxxxxx: begin
+											oRed 	= 10'h3FF;
+						                    oGreen 	= 10'h3FF;
+						                    oBlue 	= 10'h3FF;
+										end//640~767
+						10'b110xxxxxxx: begin
+											oRed 	= 10'h0;
+						                    oGreen 	= 10'h0;
+						                    oBlue 	= 10'h0;
+										end//768~799
+						10'b111xxxxxxx: begin
+											oRed 	= 10'h3FF;
+						                    oGreen 	= 10'h3FF;
+						                    oBlue 	= 10'h3FF;
+										end 	*/
+						default: begin
+							oRed 	= 10'h0;
+							oGreen 	= 10'h0;
+							oBlue 	= 10'h0;
+						end
+					endcase
+					/*	oRed 	= (pRed + 2*pGreen + pBlue)/4;
+						oGreen 	= ((pRed + 2*pGreen + pBlue)/4)>>3;
+						oBlue 	= ((pRed + 2*pGreen + pBlue)/4)>>6;*/
+					end		
+			2'b00: 	begin //raw RGB
+						oRed 	= pRed;
+						oGreen 	= pGreen;
+						oBlue 	= pBlue;
+					end
+		endcase
+	end
+	//====sequential declaration==============//
+	always @(posedge clk or negedge rst) begin
+		if(!rst) begin
+			luminance <= 0;
+			saturation <= 0;
+			pre_add <= add;
+			pre_sub <= sub;
+			pre_rst_frame <= rst_frame;
+			counter <= 0;
+		end
+		else begin
+			luminance <= next_luminance;
+			saturation  <= next_saturation;
+			pre_add <= add;
+			pre_sub <= sub;
+			pre_rst_frame <= rst_frame;
+			counter <= next_counter;
+		end
+	end
+	//====continuous assignment===============//
+	assign	oRequest	=	iRequest;
+	
+endmodule
